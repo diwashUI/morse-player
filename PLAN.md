@@ -92,9 +92,11 @@ After each milestone, we review the diff together before moving on.
 
 ## 7. Milestones
 
-- **Day 1 — Logic + skeleton UI:** `lib/morse.ts` + tests green, input/output/chart rendering
-- **Day 2 — Sound:** `lib/audio.ts` + `useMorsePlayer`, play/stop, WPM slider, signal light
+- **Day 1 — Logic + skeleton UI:** `lib/morse.ts` + tests green, input/output/chart rendering ✅ (shipped Oct 10)
+- **Day 2 — Sound:** `lib/audio.ts` + `useMorsePlayer`, play/stop, WPM slider, signal light ✅ (shipped Oct 10)
+- **Day 2.5 — Voice + flash:** mic button (Web Speech API → text → morse → auto-play), camera torch blinks in sync, click-to-hear chart ✅ (shipped Oct 10)
 - **Day 3 — Ship:** polish, `npm run build` green, deploy to Vercel, README, LinkedIn post
+- **Open question:** hand-sign visual — animated tapping hand (simple, recommended) vs camera gesture input via hand-tracking ML (complex). diwash to decide.
 
 ## 8. Definition of done
 

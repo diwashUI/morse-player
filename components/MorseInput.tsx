@@ -1,13 +1,16 @@
 "use client";
 
+import type { ReactNode } from "react";
+
 interface MorseInputProps {
   value: string;
   onChange: (v: string) => void;
   mode: "encode" | "decode";
   onToggleMode: () => void;
+  voiceButton?: ReactNode;
 }
 
-export default function MorseInput({ value, onChange, mode, onToggleMode }: MorseInputProps) {
+export default function MorseInput({ value, onChange, mode, onToggleMode, voiceButton }: MorseInputProps) {
   const btn = (active: boolean) =>
     `rounded-full px-4 py-1.5 text-sm font-semibold transition ${
       active ? "bg-amber-400 text-black" : "text-zinc-400 hover:text-zinc-200"
@@ -25,6 +28,7 @@ export default function MorseInput({ value, onChange, mode, onToggleMode }: Mors
           </button>
         </div>
         <span className="text-xs text-zinc-500">{value.length} chars</span>
+        {voiceButton}
       </div>
       <textarea
         value={value}
