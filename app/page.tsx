@@ -1,88 +1,95 @@
 "use client";
 
-import { useState } from "react";
-import WrappedStory from "@/components/WrappedStory";
-import type { WrappedStats } from "@/lib/github";
-
-type State =
-  | { kind: "idle" }
-  | { kind: "loading" }
-  | { kind: "error"; message: string }
-  | { kind: "done"; stats: WrappedStats };
-
-const SAMPLES = ["torvalds", "sindresorhus", "gaearon"];
-const LOADING_LINES = ["Fetching your repos…", "Counting your stars…", "Reading your commit rhythm…", "Choosing your persona…"];
+import { useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
-  const [username, setUsername] = useState("");
-  const [state, setState] = useState<State>({ kind: "idle" });
-  const [tick, setTick] = useState(0);
+  const router = useRouter();
+  const [question, setQuestion] = useState("");
+  const [options, setOptions] = useState(["", ""]);
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
 
-  async function generate(name: string) {
-    const clean = name.trim();
-    if (!clean) return;
-    setState({ kind: "loading" });
-    setTick(0);
-    const timer = setInterval(() => setTick((t) => (t + 1) % LOADING_LINES.length), 1400);
+  async function create(e: FormEvent) {
+    e.preventDefault();
+    setError("");
+    setBusy(true);
     try {
-      const res = await fetch(`/api/wrapped/${encodeURIComponent(clean)}`);
+      const res = await fetch("/api/polls", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ question, options }),
+      });
       const data = await res.json();
-      if (!res.ok) setState({ kind: "error", message: data.error ?? "Something went wrong." });
-      else setState({ kind: "done", stats: data });
+      if (!res.ok) setError(data.error ?? "Couldn't create the poll.");
+      else router.push(`/p/${data.id}`);
     } catch {
-      setState({ kind: "error", message: "Couldn't reach the server. Try again." });
+      setError("Couldn't reach the server.");
     } finally {
-      clearInterval(timer);
+      setBusy(false);
     }
   }
 
-  if (state.kind === "done") {
-    return <WrappedStory stats={state.stats} onReset={() => { setUsername(""); setState({ kind: "idle" }); }} />;
-  }
-
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-[#09090b] px-6 text-center text-zinc-100">
-      <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">Spotify Wrapped, but for code</p>
-      <h1 className="mt-3 bg-gradient-to-r from-violet-400 via-fuchsia-400 to-orange-400 bg-clip-text text-6xl font-black tracking-tight text-transparent">
-        GitHub Wrapped
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#09090b] px-6 text-zinc-100">
+      <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">Live polls in 10 seconds</p>
+      <h1 className="mt-3 bg-gradient-to-r from-lime-300 via-emerald-400 to-teal-400 bg-clip-text text-6xl font-black tracking-tight text-transparent">
+        QuickPoll
       </h1>
-      <p className="mt-4 max-w-md text-zinc-400">
-        Type any GitHub username and get an animated year-in-review of their code. No login, no API keys.
+      <p className="mt-4 max-w-md text-center text-zinc-400">
+        Ask anything. Share the link. Watch votes roll in live.
       </p>
 
-      {state.kind === "loading" ? (
-        <div className="mt-10">
-          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-fuchsia-400" />
-          <p className="mt-4 text-zinc-400">{LOADING_LINES[tick]}</p>
-        </div>
-      ) : (
-        <form className="mt-10 w-full max-w-md" onSubmit={(e) => { e.preventDefault(); generate(username); }}>
-          <div className="flex gap-2">
+      <form onSubmit={create} className="mt-10 w-full max-w-md space-y-3">
+        <input
+          value={question}
+          onChange={(e) => setQuestion(e.target.value)}
+          placeholder="Your question…"
+          maxLength={140}
+          autoFocus
+          className="w-full rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-3 text-lg outline-none placeholder:text-zinc-600 focus:border-emerald-400"
+        />
+        {options.map((o, i) => (
+          <div key={i} className="flex gap-2">
             <input
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              placeholder="github username…"
-              autoFocus
-              className="min-w-0 flex-1 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-lg outline-none placeholder:text-zinc-600 focus:border-fuchsia-400"
+              value={o}
+              onChange={(e) => setOptions((x) => x.map((v, idx) => (idx === i ? e.target.value : v)))}
+              placeholder={`Option ${i + 1}`}
+              maxLength={60}
+              className="min-w-0 flex-1 rounded-2xl border border-zinc-700 bg-zinc-900 px-5 py-2.5 outline-none placeholder:text-zinc-600 focus:border-emerald-400"
             />
-            <button type="submit" className="shrink-0 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-7 py-3 text-lg font-bold transition hover:scale-105">
-              Wrap it
-            </button>
-          </div>
-          {state.kind === "error" && <p className="mt-3 text-sm text-red-400">{state.message}</p>}
-          <div className="mt-5 flex items-center justify-center gap-2 text-sm text-zinc-500">
-            <span>Try:</span>
-            {SAMPLES.map((s) => (
-              <button key={s} type="button" onClick={() => generate(s)}
-                className="rounded-full border border-zinc-700 px-3 py-1 transition hover:border-fuchsia-400 hover:text-zinc-200">
-                {s}
+            {options.length > 2 && (
+              <button
+                type="button"
+                onClick={() => setOptions((x) => x.filter((_, idx) => idx !== i))}
+                className="rounded-2xl border border-zinc-700 px-3 text-zinc-500 hover:border-red-400 hover:text-red-400"
+                aria-label="Remove option"
+              >
+                ✕
               </button>
-            ))}
+            )}
           </div>
-        </form>
-      )}
+        ))}
+        {options.length < 6 && (
+          <button
+            type="button"
+            onClick={() => setOptions((o) => [...o, ""])}
+            className="text-sm text-zinc-500 hover:text-emerald-300"
+          >
+            + add option
+          </button>
+        )}
+        {error && <p className="text-sm text-red-400">{error}</p>}
+        <button
+          type="submit"
+          disabled={busy}
+          className="w-full rounded-full bg-gradient-to-r from-lime-400 to-emerald-500 py-3 text-lg font-bold text-black transition hover:scale-[1.02] disabled:opacity-50"
+        >
+          {busy ? "Creating…" : "Create poll →"}
+        </button>
+      </form>
 
-      <p className="mt-14 text-xs text-zinc-600">Built with Next.js · GitHub's free public API · Deployed on Vercel</p>
+      <p className="mt-14 text-xs text-zinc-600">Built with Next.js · Supabase · Deployed on Vercel</p>
     </div>
   );
 }

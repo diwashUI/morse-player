@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "GitHub Wrapped",
-  description: "Spotify Wrapped, but for your GitHub profile. Type a username, get an animated year in code.",
+  title: "QuickPoll — live polls in 10 seconds",
+  description: "Ask anything. Share the link. Watch votes roll in live.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
