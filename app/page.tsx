@@ -1,69 +1,88 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import WrappedStory from "@/components/WrappedStory";
+import type { WrappedStats } from "@/lib/github";
+
+type State =
+  | { kind: "idle" }
+  | { kind: "loading" }
+  | { kind: "error"; message: string }
+  | { kind: "done"; stats: WrappedStats };
+
+const SAMPLES = ["torvalds", "sindresorhus", "gaearon"];
+const LOADING_LINES = ["Fetching your repos…", "Counting your stars…", "Reading your commit rhythm…", "Choosing your persona…"];
 
 export default function Home() {
+  const [username, setUsername] = useState("");
+  const [state, setState] = useState<State>({ kind: "idle" });
+  const [tick, setTick] = useState(0);
+
+  async function generate(name: string) {
+    const clean = name.trim();
+    if (!clean) return;
+    setState({ kind: "loading" });
+    setTick(0);
+    const timer = setInterval(() => setTick((t) => (t + 1) % LOADING_LINES.length), 1400);
+    try {
+      const res = await fetch(`/api/wrapped/${encodeURIComponent(clean)}`);
+      const data = await res.json();
+      if (!res.ok) setState({ kind: "error", message: data.error ?? "Something went wrong." });
+      else setState({ kind: "done", stats: data });
+    } catch {
+      setState({ kind: "error", message: "Couldn't reach the server. Try again." });
+    } finally {
+      clearInterval(timer);
+    }
+  }
+
+  if (state.kind === "done") {
+    return <WrappedStory stats={state.stats} onReset={() => { setUsername(""); setState({ kind: "idle" }); }} />;
+  }
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#09090b] px-6 text-center text-zinc-100">
+      <p className="text-sm uppercase tracking-[0.35em] text-zinc-500">Spotify Wrapped, but for code</p>
+      <h1 className="mt-3 bg-gradient-to-r from-violet-400 via-fuchsia-400 to-orange-400 bg-clip-text text-6xl font-black tracking-tight text-transparent">
+        GitHub Wrapped
+      </h1>
+      <p className="mt-4 max-w-md text-zinc-400">
+        Type any GitHub username and get an animated year-in-review of their code. No login, no API keys.
+      </p>
+
+      {state.kind === "loading" ? (
+        <div className="mt-10">
+          <div className="mx-auto h-10 w-10 animate-spin rounded-full border-2 border-zinc-700 border-t-fuchsia-400" />
+          <p className="mt-4 text-zinc-400">{LOADING_LINES[tick]}</p>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
+      ) : (
+        <form className="mt-10 w-full max-w-md" onSubmit={(e) => { e.preventDefault(); generate(username); }}>
+          <div className="flex gap-2">
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="github username…"
+              autoFocus
+              className="min-w-0 flex-1 rounded-full border border-zinc-700 bg-zinc-900 px-5 py-3 text-lg outline-none placeholder:text-zinc-600 focus:border-fuchsia-400"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+            <button type="submit" className="shrink-0 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 px-7 py-3 text-lg font-bold transition hover:scale-105">
+              Wrap it
+            </button>
+          </div>
+          {state.kind === "error" && <p className="mt-3 text-sm text-red-400">{state.message}</p>}
+          <div className="mt-5 flex items-center justify-center gap-2 text-sm text-zinc-500">
+            <span>Try:</span>
+            {SAMPLES.map((s) => (
+              <button key={s} type="button" onClick={() => generate(s)}
+                className="rounded-full border border-zinc-700 px-3 py-1 transition hover:border-fuchsia-400 hover:text-zinc-200">
+                {s}
+              </button>
+            ))}
+          </div>
+        </form>
+      )}
+
+      <p className="mt-14 text-xs text-zinc-600">Built with Next.js · GitHub's free public API · Deployed on Vercel</p>
     </div>
   );
 }
