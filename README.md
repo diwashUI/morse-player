@@ -1,29 +1,46 @@
-# QuickPoll 🗳️
+# Morse Code Player 📻
 
-Live polls in 10 seconds. Ask anything, share the link, watch votes roll in live.
+Type text → get Morse code. Paste Morse → get text. Press play and hear it beeped
+out loud with a flashing signal light.
 
-## How it works
+## Run it
 
-- **Frontend** (`app/page.tsx`, `app/p/[id]/page.tsx`): React pages. The create form and the voting page.
-- **Backend** (`app/api/polls/...`): Next.js API routes. The browser never talks to the database directly — it calls these routes, and *they* talk to Supabase.
-- **Database** (`supabase/schema.sql`): two tables — `polls` and `options`. Run the SQL once in Supabase's SQL editor.
+```bash
+npm install
+npm run dev    # → http://localhost:3000
+npm test       # unit tests
+npm run build  # production build
+```
 
-## Setup (one time)
+## How it's built
 
-1. Create a free project at [supabase.com](https://supabase.com).
-2. In the Supabase dashboard: **SQL Editor → New query** → paste `supabase/schema.sql` → Run.
-3. **Project Settings → API**: copy the project URL and the `anon` key.
-4. Copy `.env.example` to `.env.local` and fill in the two values.
-5. `npm install` then `npm run dev` → open http://localhost:3000.
+```
+app/
+  page.tsx              — page composition (no logic, just arranges components)
+  layout.tsx            — title, theme shell
+components/
+  MorseInput.tsx        — textarea + encode/decode toggle
+  MorseOutput.tsx       — live translation + copy button
+  ReferenceChart.tsx    — A–Z 0–9 lookup grid
+hooks/
+  useMorsePlayer.ts     — play/stop state machine (Day 2)
+lib/
+  morse.ts              — the alphabet table + textToMorse / morseToText (pure logic)
+  audio.ts              — Web Audio beep engine (Day 2)
+tests/
+  morse.test.ts         — unit tests for the conversion logic
+```
 
-## Deploy
+Rules: `lib/` never touches the screen, `components/` never touch audio.
+They talk through the hook. That's what keeps code maintainable.
 
-Push to GitHub, import the repo in [vercel.com](https://vercel.com), and add the same two
-environment variables in Vercel's project settings. Every push to `main` redeploys automatically.
+## The timing spec
 
-## What you'll learn from this codebase
+Standard PARIS Morse timing: dot = 1 unit, dash = 3 units, unit = `1200 / WPM` ms.
+Tone: 650 Hz sine wave with 5 ms fade in/out (no speaker clicks).
 
-- `app/api/*` — what a backend API route looks like
-- `lib/supabase.ts` — how server code connects to a database
-- `app/p/[id]/page.tsx` — dynamic routes, polling for live data, share links
-- `supabase/schema.sql` — the simplest real database schema: two tables, one foreign key
+## Roadmap
+
+- [x] Day 1 — encode/decode logic + tests + UI skeleton
+- [ ] Day 2 — sound player, signal light, WPM slider, click-to-hear chart
+- [ ] Day 3 — polish, deploy, LinkedIn post

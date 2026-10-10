@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "QuickPoll — live polls in 10 seconds",
-  description: "Ask anything. Share the link. Watch votes roll in live.",
+  title: "Morse Code Player",
+  description: "Type text, get Morse code. Paste Morse, get text. Then hear it played out loud.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
