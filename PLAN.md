@@ -96,7 +96,7 @@ After each milestone, we review the diff together before moving on.
 - **Day 2 — Sound:** `lib/audio.ts` + `useMorsePlayer`, play/stop, WPM slider, signal light ✅ (shipped Oct 10)
 - **Day 2.5 — Voice + flash:** mic button (Web Speech API → text → morse → auto-play), camera torch blinks in sync, click-to-hear chart ✅ (shipped Oct 10)
 - **Day 3 — Ship:** polish, `npm run build` green, deploy to Vercel, README, LinkedIn post
-- **Open question:** hand-sign visual — animated tapping hand (simple, recommended) vs camera gesture input via hand-tracking ML (complex). diwash to decide.
+- **Open question:** hand-sign visual → decided: animated tapping hand 👊 (punches on every beep, glow ring doubles as the signal light). Camera gesture input parked as a possible future extra.
 
 ## 8. Definition of done
 

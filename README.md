@@ -27,7 +27,7 @@ components/
   MorseOutput.tsx          — live translation + copy button
   ReferenceChart.tsx       — A–Z 0–9 lookup grid, click any letter to hear it
   PlaybackControls.tsx     — play/stop + WPM slider
-  SignalLight.tsx          — lamp flashing in sync with the beeps
+  TappingHand.tsx          — 👊 fist punching in sync with the beeps (+ glow ring)
   VoiceButton.tsx          — mic toggle (hidden where speech API is unsupported)
   TorchToggle.tsx          — camera flashlight toggle (hidden where unsupported)
 hooks/
@@ -61,5 +61,5 @@ Tone: 650 Hz sine wave with 5 ms fade in/out (no speaker clicks).
 - [x] Day 2 — sound player, signal light, WPM slider, click-to-hear chart
 - [x] Day 2.5 — voice input, torch flash sync
 - [x] Deploy — live on Vercel
-- [ ] Hand-sign visual — tapping-hand animation vs camera gesture input (to decide)
+- [x] Hand-sign visual — tapping-hand animation 👊
 - [ ] Day 3 — LinkedIn post with a video of it beeping your name

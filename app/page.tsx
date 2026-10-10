@@ -5,7 +5,7 @@ import MorseInput from "@/components/MorseInput";
 import MorseOutput from "@/components/MorseOutput";
 import ReferenceChart from "@/components/ReferenceChart";
 import PlaybackControls from "@/components/PlaybackControls";
-import SignalLight from "@/components/SignalLight";
+import TappingHand from "@/components/TappingHand";
 import VoiceButton from "@/components/VoiceButton";
 import TorchToggle, { type TorchState } from "@/components/TorchToggle";
 import { morseToText, textToMorse } from "@/lib/morse";
@@ -128,7 +128,7 @@ export default function Home() {
 
         <MorseOutput result={result} />
 
-        <SignalLight on={player.signalOn} />
+        <TappingHand on={player.signalOn} />
         <PlaybackControls
           isPlaying={player.isPlaying}
           onPlay={() => player.play(morseToPlay)}
