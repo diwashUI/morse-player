@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { textToMorse } from "../lib/morse";
 import { playMorse, type Playback } from "../lib/audio";
 import { newWords, WordQueue } from "../lib/liveQueue";
+import { autoWpmForWord, wordTiming } from "../lib/letterTiming";
 
 // Minimal structural types for the Web Speech API (same shape as
 // useSpeechInput — TS's DOM lib doesn't ship these).
@@ -41,6 +42,8 @@ export interface LiveWord {
 interface UseLiveTransmitterOpts {
   wpm: number;
   frequency?: number;
+  /** When true (default), pace each word so every hand sign is readable. */
+  autoSpeed?: boolean;
   /** Fires on every tone on/off — torch, signal light, etc. */
   onSignal?: (on: boolean) => void;
   /** Cap on feed rows kept in state (oldest drop off). */
@@ -61,6 +64,7 @@ const FEED_CAP = 60;
 export function useLiveTransmitter({
   wpm,
   frequency = 650,
+  autoSpeed = true,
   onSignal,
   maxFeed = FEED_CAP,
 }: UseLiveTransmitterOpts) {
@@ -74,6 +78,8 @@ export function useLiveTransmitter({
   const [feed, setFeed] = useState<LiveWord[]>([]);
   const [queued, setQueued] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  /** WPM actually used for the latest word (auto or manual). */
+  const [effectiveWpm, setEffectiveWpm] = useState(wpm);
   /** Letter/word currently being beeped — drives the sign-language display. */
   const [currentLetter, setCurrentLetter] = useState<string | null>(null);
   const [currentWord, setCurrentWord] = useState<string | null>(null);
@@ -91,6 +97,8 @@ export function useLiveTransmitter({
   onSignalRef.current = onSignal;
   const wpmRef = useRef(wpm);
   wpmRef.current = wpm;
+  const autoSpeedRef = useRef(autoSpeed);
+  autoSpeedRef.current = autoSpeed;
   const freqRef = useRef(frequency);
   freqRef.current = frequency;
   const maxFeedRef = useRef(maxFeed);
@@ -107,35 +115,20 @@ export function useLiveTransmitter({
   /**
    * Fire setCurrentLetter as each letter's tones begin, so the UI can
    * fingerspell the word in sign language in sync with the beeps.
-   * Pure timing math — no audio. Skipped if the morse doesn't align
-   * 1:1 with the word's characters.
    */
   const scheduleLetterEvents = useCallback(
     (word: string, morse: string, wpm: number) => {
-      const codes = morse.split(" ");
-      const chars = [...word];
-      if (codes.length !== chars.length) return;
-      const unit = 1200 / wpm;
-      let t = 0; // in units
-      chars.forEach((ch, i) => {
-        const syms = [...(codes[i] ?? "")].filter((s) => s === "." || s === "-");
-        const startMs = t * unit;
+      const { events, totalMs } = wordTiming(word, morse, wpm);
+      events.forEach(({ letter, startMs }) => {
         letterTimeoutsRef.current.push(
-          window.setTimeout(() => setCurrentLetter(ch), startMs)
+          window.setTimeout(() => setCurrentLetter(letter), startMs)
         );
-        let dur = 0;
-        syms.forEach((s, si) => {
-          dur += s === "." ? 1 : 3;
-          if (si < syms.length - 1) dur += 1; // intra-letter gap
-        });
-        t += dur;
-        if (i < chars.length - 1) t += 3; // inter-letter gap
       });
       letterTimeoutsRef.current.push(
         window.setTimeout(() => {
           setCurrentLetter(null);
           setCurrentWord(null);
-        }, t * unit)
+        }, totalMs)
       );
     },
     []
@@ -150,12 +143,16 @@ export function useLiveTransmitter({
         const word = queueRef.current.shift();
         setQueued(queueRef.current.size);
         if (!word || !wantListeningRef.current) break;
-        const morse = textToMorse(word.toUpperCase());
+        const wordU = word.toUpperCase();
+        const morse = textToMorse(wordU);
         if (!morse.trim()) continue;
-        setCurrentWord(word.toUpperCase());
-        scheduleLetterEvents(word.toUpperCase(), morse, wpmRef.current);
+        // Auto speed: pace this word so every hand sign is readable.
+        const wpmNow = autoSpeedRef.current ? autoWpmForWord(wordU) : wpmRef.current;
+        setEffectiveWpm(wpmNow);
+        setCurrentWord(wordU);
+        scheduleLetterEvents(wordU, morse, wpmNow);
         const pb = playMorse(morse, {
-          wpm: wpmRef.current,
+          wpm: wpmNow,
           frequency: freqRef.current,
           onSignal: (on) => {
             try {
@@ -304,5 +301,5 @@ export function useLiveTransmitter({
     []
   );
 
-  return { supported, listening, interim, feed, queued, error, start, stop, currentLetter, currentWord };
+  return { supported, listening, interim, feed, queued, error, start, stop, currentLetter, currentWord, effectiveWpm };
 }

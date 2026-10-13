@@ -112,14 +112,24 @@ export function TrashIcon({ className }: IconProps) {
   );
 }
 
-export function WaveformIcon({ className }: IconProps) {
+export function ZapIcon({ className }: IconProps) {
   return (
     <Base className={className}>
-      <path d="M4 10v4" />
-      <path d="M8 7v10" />
-      <path d="M12 4v16" />
-      <path d="M16 7v10" />
-      <path d="M20 10v4" />
+      <path d="M13 2 3 14h7l-1 8 10-12h-7l1-8z" />
+    </Base>
+  );
+}
+
+export function FilmIcon({ className }: IconProps) {
+  return (
+    <Base className={className}>
+      <rect x="2" y="4" width="20" height="16" rx="2" />
+      <path d="M7 4v16" />
+      <path d="M17 4v16" />
+      <path d="M2 9h5" />
+      <path d="M2 15h5" />
+      <path d="M17 9h5" />
+      <path d="M17 15h5" />
     </Base>
   );
 }
@@ -127,7 +137,7 @@ export function WaveformIcon({ className }: IconProps) {
 export function Spinner({ className = "h-4 w-4" }: IconProps) {
   return (
     <span
-      className={`${className} animate-spin rounded-full border-2 border-zinc-500 border-t-transparent`}
+      className={`${className} animate-spin rounded-full border-2 border-zinc-400 border-t-transparent`}
       aria-hidden="true"
     />
   );

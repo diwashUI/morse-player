@@ -40,7 +40,7 @@ export default function SignDisplay({ letter, word }: Props) {
 
   return (
     <div className="flex flex-col items-center gap-3">
-      <div className="flex h-44 w-44 items-center justify-center overflow-hidden rounded-3xl border border-white/10 bg-white/[0.03] shadow-[0_0_32px_rgba(239,68,68,0.08)]">
+      <div className="flex h-44 w-44 items-center justify-center overflow-hidden rounded-3xl bg-[#141419] shadow-lg shadow-zinc-900/10 ring-1 ring-zinc-900/10">
         {isAlpha ? (
           <img
             key={showLetter}
@@ -65,7 +65,7 @@ export default function SignDisplay({ letter, word }: Props) {
             return (
               <span
                 key={i}
-                className={active ? "text-red-300" : "text-zinc-600"}
+                className={active ? "text-red-600" : "text-zinc-300"}
               >
                 {ch}
               </span>
@@ -73,7 +73,7 @@ export default function SignDisplay({ letter, word }: Props) {
           })}
         </p>
       ) : null}
-      <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-600">
+      <p className="text-[11px] uppercase tracking-[0.3em] text-zinc-400">
         {idle ? "sign language · live demo" : "sign language"}
       </p>
     </div>
