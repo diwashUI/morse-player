@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Morse TX — live voice-to-Morse transmitter",
-  description: "Type text, get Morse code. Paste Morse, get text. Then hear it played out loud.",
+  description:
+    "Speak into your mic and transmit live Morse code — with sign-language fingerspelling, torch sync, and downloadable, shareable transmissions.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

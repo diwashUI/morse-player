@@ -74,6 +74,10 @@ export function useLiveTransmitter({
   const [feed, setFeed] = useState<LiveWord[]>([]);
   const [queued, setQueued] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  /** Letter/word currently being beeped — drives the sign-language display. */
+  const [currentLetter, setCurrentLetter] = useState<string | null>(null);
+  const [currentWord, setCurrentWord] = useState<string | null>(null);
+  const letterTimeoutsRef = useRef<number[]>([]);
 
   const recRef = useRef<SpeechRecognition | null>(null);
   const wantListeningRef = useRef(false);
@@ -92,6 +96,51 @@ export function useLiveTransmitter({
   const maxFeedRef = useRef(maxFeed);
   maxFeedRef.current = maxFeed;
 
+  // Clear any pending letter-display timeouts (word finished or stopped).
+  const clearLetterEvents = useCallback(() => {
+    letterTimeoutsRef.current.forEach((id) => window.clearTimeout(id));
+    letterTimeoutsRef.current = [];
+    setCurrentLetter(null);
+    setCurrentWord(null);
+  }, []);
+
+  /**
+   * Fire setCurrentLetter as each letter's tones begin, so the UI can
+   * fingerspell the word in sign language in sync with the beeps.
+   * Pure timing math — no audio. Skipped if the morse doesn't align
+   * 1:1 with the word's characters.
+   */
+  const scheduleLetterEvents = useCallback(
+    (word: string, morse: string, wpm: number) => {
+      const codes = morse.split(" ");
+      const chars = [...word];
+      if (codes.length !== chars.length) return;
+      const unit = 1200 / wpm;
+      let t = 0; // in units
+      chars.forEach((ch, i) => {
+        const syms = [...(codes[i] ?? "")].filter((s) => s === "." || s === "-");
+        const startMs = t * unit;
+        letterTimeoutsRef.current.push(
+          window.setTimeout(() => setCurrentLetter(ch), startMs)
+        );
+        let dur = 0;
+        syms.forEach((s, si) => {
+          dur += s === "." ? 1 : 3;
+          if (si < syms.length - 1) dur += 1; // intra-letter gap
+        });
+        t += dur;
+        if (i < chars.length - 1) t += 3; // inter-letter gap
+      });
+      letterTimeoutsRef.current.push(
+        window.setTimeout(() => {
+          setCurrentLetter(null);
+          setCurrentWord(null);
+        }, t * unit)
+      );
+    },
+    []
+  );
+
   // Drain the word queue in order, one playMorse() per word.
   const pump = useCallback(async () => {
     if (pumpingRef.current) return;
@@ -103,6 +152,8 @@ export function useLiveTransmitter({
         if (!word || !wantListeningRef.current) break;
         const morse = textToMorse(word.toUpperCase());
         if (!morse.trim()) continue;
+        setCurrentWord(word.toUpperCase());
+        scheduleLetterEvents(word.toUpperCase(), morse, wpmRef.current);
         const pb = playMorse(morse, {
           wpm: wpmRef.current,
           frequency: freqRef.current,
@@ -117,12 +168,13 @@ export function useLiveTransmitter({
         playbackRef.current = pb;
         await pb.finished;
         playbackRef.current = null;
+        clearLetterEvents();
       }
     } finally {
       pumpingRef.current = false;
       setQueued(queueRef.current.size);
     }
-  }, []);
+  }, [scheduleLetterEvents, clearLetterEvents]);
 
   const startRecognition = useCallback(() => {
     const w = window as unknown as {
@@ -227,6 +279,7 @@ export function useLiveTransmitter({
     playbackRef.current?.stop();
     playbackRef.current = null;
     pumpingRef.current = false;
+    clearLetterEvents();
     queueRef.current.clear();
     setQueued(0);
     setInterim("");
@@ -236,7 +289,7 @@ export function useLiveTransmitter({
     } catch {
       /* noop */
     }
-  }, []);
+  }, [clearLetterEvents]);
 
   useEffect(
     () => () => {
@@ -251,5 +304,5 @@ export function useLiveTransmitter({
     []
   );
 
-  return { supported, listening, interim, feed, queued, error, start, stop };
+  return { supported, listening, interim, feed, queued, error, start, stop, currentLetter, currentWord };
 }

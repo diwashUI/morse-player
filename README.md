@@ -1,13 +1,14 @@
 # Morse TX 📻
 
 A real-time voice-to-Morse transmitter. Tap the mic, talk — your words stream
-out as Morse beeps a few seconds behind your voice, like a live broadcast. The
-punching fist, signal glow, and your phone's camera flashlight all fire in sync
-with every dot and dash.
+out as Morse beeps a few seconds behind your voice, like a live broadcast. Each
+letter is **fingerspelled in sign language** as its tones play, and your phone's
+camera flashlight fires in sync with every dot and dash.
 
-Stop transmitting and the message is **saved** — replay it, copy it, or share it
-anywhere with one tap. Past transmissions live in your browser (localStorage,
-no account, no server).
+Stop transmitting and the message is **saved** — replay it, **download it as
+audio (.wav) or text**, or share it anywhere with one tap (sharing sends the
+actual audio file where supported). Past transmissions live in your browser
+(localStorage, no account, no server).
 
 Live: https://morse-player.vercel.app
 
@@ -31,8 +32,9 @@ app/
   layout.tsx               — title, theme shell
 components/
   LiveTransmitter.tsx      — the whole app: transmit, log, save, share, replay, history
-  TappingHand.tsx          — 👊 fist punching in sync with the beeps (+ glow ring)
+  SignDisplay.tsx          — ASL fingerspelling display, synced to the beeps
   TorchToggle.tsx          — camera flashlight on/off
+  icons.tsx                — stroke icon set (no emoji in the UI)
 hooks/
   useLiveTransmitter.ts    — mic → words → queued Morse playback pump
 lib/
@@ -41,7 +43,10 @@ lib/
   torch.ts                 — camera flashlight control
   liveQueue.ts             — word consumption + FIFO queue (pure, tested)
   transmissions.ts         — saved transmissions: localStorage + share text
-tests/                     — 39 unit tests (vitest)
+  wav.ts                   — morse → downloadable 16-bit WAV audio (pure encoder, tested)
+public/
+  signs/                   — 26 ASL fingerspelling handshape tiles (a.png … z.png)
+tests/                     — 43 unit tests (vitest)
 ```
 
 ## How the live transmitter works
