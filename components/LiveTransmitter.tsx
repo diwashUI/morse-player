@@ -351,12 +351,18 @@ export default function LiveTransmitter({ wpm, onWpmChange, onSignal }: Props) {
           onClick={() => (tx.listening ? handleStop() : handleStart())}
           aria-pressed={tx.listening}
           aria-label={tx.listening ? "Stop transmitting" : "Start transmitting"}
-          className={`flex h-24 w-24 items-center justify-center rounded-full transition-all ${
+          className={`relative flex h-24 w-24 items-center justify-center rounded-full transition-all ${
             tx.listening
               ? "animate-pulse bg-red-500 text-white shadow-[0_0_36px_rgba(239,68,68,0.45)]"
               : "bg-zinc-100 text-zinc-900 shadow-[0_0_24px_rgba(255,255,255,0.12)] hover:scale-105 hover:bg-white"
           }`}
         >
+          {!tx.listening && (
+            <span
+              className="absolute inset-0 animate-ping rounded-full bg-white/10"
+              aria-hidden="true"
+            />
+          )}
           {tx.listening ? (
             <StopIcon className="h-8 w-8" />
           ) : (
@@ -386,23 +392,28 @@ export default function LiveTransmitter({ wpm, onWpmChange, onSignal }: Props) {
 
         <SignDisplay letter={tx.currentLetter} word={tx.currentWord} />
 
-        <label className="flex items-center gap-3 text-sm text-zinc-400">
-          <span className="text-[11px] font-medium uppercase tracking-[0.2em]">
-            Speed
-          </span>
-          <input
-            type="range"
-            min={5}
-            max={40}
-            value={wpm}
-            onChange={(e) => onWpmChange(Number(e.target.value))}
-            className="w-40 accent-red-500"
-            aria-label="Transmission speed in words per minute"
-          />
-          <span className="w-16 font-mono text-sm tabular-nums text-zinc-300">
-            {wpm} WPM
-          </span>
-        </label>
+        <div>
+          <label className="flex items-center gap-3 text-sm text-zinc-400">
+            <span className="text-[11px] font-medium uppercase tracking-[0.2em]">
+              Speed
+            </span>
+            <input
+              type="range"
+              min={5}
+              max={40}
+              value={wpm}
+              onChange={(e) => onWpmChange(Number(e.target.value))}
+              className="w-40 accent-red-500"
+              aria-label="Transmission speed in words per minute"
+            />
+            <span className="w-16 font-mono text-sm tabular-nums text-zinc-300">
+              {wpm} WPM
+            </span>
+          </label>
+          <p className="mt-1 text-center text-[11px] text-zinc-600">
+            Slower speeds make the hand signs easier to read
+          </p>
+        </div>
 
         {tx.queued > 0 && (
           <p className="text-xs text-zinc-400">
@@ -425,7 +436,7 @@ export default function LiveTransmitter({ wpm, onWpmChange, onSignal }: Props) {
           {tx.feed.map((w) => (
             <div
               key={w.id}
-              className="flex items-baseline justify-between gap-4 border-b border-white/[0.04] pb-2"
+              className="animate-rise flex items-baseline justify-between gap-4 border-b border-white/[0.04] pb-2"
             >
               <span className="font-medium text-zinc-100">{w.text}</span>
               <span className="truncate font-mono text-sm text-zinc-500">
@@ -443,7 +454,7 @@ export default function LiveTransmitter({ wpm, onWpmChange, onSignal }: Props) {
 
       {/* Just-saved transmission */}
       {lastTx && (
-        <div className="rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-6 sm:p-8">
+        <div className="animate-rise rounded-2xl border border-red-500/20 bg-red-500/[0.04] p-6 sm:p-8">
           <p className={`${sectionLabel} flex items-center gap-2 !text-red-300/80`}>
             <CheckIcon className="h-3.5 w-3.5" />
             Transmission saved

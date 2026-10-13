@@ -41,3 +41,21 @@ body {
   to { opacity: 1; transform: scale(1); }
 }
 .animate-pop { animation: pop-in 0.5s cubic-bezier(0.2, 0.7, 0.25, 1) both; }
+
+@keyframes eq {
+  0%, 100% { height: 30%; }
+  50% { height: 100%; }
+}
+.eq-bar {
+  width: 3px;
+  border-radius: 2px;
+  background: #f87171;
+  animation: eq 1.1s ease-in-out infinite;
+}
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(50px, -30px) scale(1.15); }
+}
+.blob { animation: drift 16s ease-in-out infinite; }
+.blob2 { animation: drift 21s ease-in-out infinite reverse; }

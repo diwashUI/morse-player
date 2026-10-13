@@ -6,7 +6,8 @@ import TorchToggle, { type TorchState } from "@/components/TorchToggle";
 import { requestTorch, type Torch } from "@/lib/torch";
 
 export default function Home() {
-  const [wpm, setWpm] = useState(20);
+  // 12 WPM default: slow enough to actually read the hand signs.
+  const [wpm, setWpm] = useState(12);
   const [torchState, setTorchState] = useState<TorchState>("off");
   const torchRef = useRef<Torch | null>(null);
 
@@ -44,11 +45,26 @@ export default function Home() {
   );
 
   return (
-    <div className="min-h-screen bg-[#0b0b0f] text-zinc-100">
-      <header className="border-b border-white/[0.06]">
+    <div className="relative min-h-screen overflow-hidden bg-[#0b0b0f] text-zinc-100">
+      {/* Ambient background glow */}
+      <div className="pointer-events-none absolute inset-0" aria-hidden="true">
+        <div className="blob absolute -top-32 left-1/4 h-96 w-96 rounded-full bg-red-500/[0.07] blur-3xl" />
+        <div className="blob2 absolute top-1/3 -right-24 h-80 w-80 rounded-full bg-red-500/[0.05] blur-3xl" />
+        <div className="blob absolute -bottom-40 -left-24 h-96 w-96 rounded-full bg-zinc-500/[0.05] blur-3xl" />
+      </div>
+
+      <header className="relative border-b border-white/[0.06]">
         <div className="mx-auto max-w-3xl px-6 py-10 text-center">
-          <p className="flex items-center justify-center gap-2 text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500">
-            <span className="h-1.5 w-1.5 rounded-full bg-red-500" />
+          <p className="flex items-center justify-center gap-2.5 text-[11px] font-medium uppercase tracking-[0.35em] text-zinc-500">
+            <span className="flex h-4 items-end gap-[3px]" aria-hidden="true">
+              {[0, 1, 2, 3].map((i) => (
+                <span
+                  key={i}
+                  className="eq-bar"
+                  style={{ animationDelay: `${i * 0.18}s` }}
+                />
+              ))}
+            </span>
             Real-time voice → Morse
           </p>
           <h1 className="mt-3 font-display text-5xl font-bold tracking-tight text-white">
@@ -60,14 +76,14 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-3xl space-y-6 px-6 py-10">
+      <main className="relative mx-auto max-w-3xl space-y-6 px-6 py-10">
         <LiveTransmitter wpm={wpm} onWpmChange={setWpm} onSignal={driveTorch} />
         <div className="flex justify-center">
           <TorchToggle state={torchState} onToggle={toggleTorch} />
         </div>
       </main>
 
-      <footer className="pb-10 text-center text-xs text-zinc-600">
+      <footer className="relative pb-10 text-center text-xs text-zinc-600">
         Built while learning · Next.js + TypeScript + Tailwind + Web Audio
       </footer>
     </div>
