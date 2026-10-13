@@ -8,6 +8,7 @@ import PlaybackControls from "@/components/PlaybackControls";
 import TappingHand from "@/components/TappingHand";
 import VoiceButton from "@/components/VoiceButton";
 import TorchToggle, { type TorchState } from "@/components/TorchToggle";
+import LiveTransmitter from "@/components/LiveTransmitter";
 import { morseToText, textToMorse } from "@/lib/morse";
 import { requestTorch, type Torch } from "@/lib/torch";
 import { useMorsePlayer } from "@/hooks/useMorsePlayer";
@@ -16,6 +17,7 @@ import { useSpeechInput } from "@/hooks/useSpeechInput";
 export default function Home() {
   const [text, setText] = useState("HELLO WORLD");
   const [mode, setMode] = useState<"encode" | "decode">("encode");
+  const [tab, setTab] = useState<"translator" | "live">("translator");
   const [wpm, setWpm] = useState(20);
   const [torchState, setTorchState] = useState<TorchState>("off");
   const torchRef = useRef<Torch | null>(null);
@@ -88,7 +90,7 @@ export default function Home() {
       <header className="border-b border-zinc-800/60">
         <div className="mx-auto max-w-3xl px-6 py-8 text-center">
           <p className="text-xs uppercase tracking-[0.35em] text-zinc-500">
-            Day 2 · sound + voice + flash
+            Day 2 · sound + voice + flash · <span className="text-red-400">live TX</span>
           </p>
           <h1 className="mt-2 text-5xl font-black tracking-tight">
             Morse Code <span className="text-amber-400">Player</span>
@@ -100,6 +102,37 @@ export default function Home() {
       </header>
 
       <main className="mx-auto max-w-3xl space-y-6 px-6 py-10">
+        {/* Tab switcher */}
+        <div className="flex justify-center gap-2">
+          {(
+            [
+              ["translator", "Translator"],
+              ["live", "🔴 Live TX"],
+            ] as const
+          ).map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => {
+                if (key === tab) return;
+                player.stop();
+                speech.stop();
+                setTab(key);
+              }}
+              className={`rounded-full px-5 py-2 text-sm font-semibold transition ${
+                tab === key
+                  ? "bg-amber-400 text-black"
+                  : "bg-zinc-800 text-zinc-300 hover:bg-zinc-700"
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+
+        {tab === "live" ? (
+          <LiveTransmitter wpm={wpm} onSignal={driveTorch} />
+        ) : (
+          <>
         <MorseInput
           value={text}
           onChange={setText}
@@ -142,6 +175,8 @@ export default function Home() {
         </div>
 
         <ReferenceChart onPlayCode={(code) => player.play(code)} />
+          </>
+        )}
       </main>
 
       <footer className="pb-10 text-center text-xs text-zinc-600">
