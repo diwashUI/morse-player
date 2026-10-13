@@ -1,11 +1,18 @@
-# Morse Code Player 📻
+# Morse TX 📻
 
-Type text → get Morse code. Paste Morse → get text. Press play and hear it beeped
-out loud with a flashing signal light. Or tap the mic and just *say* it — speech
-recognition transcribes, translates, and plays it back. On a phone, the camera
-flashlight can blink the code in sync.
+A real-time voice-to-Morse transmitter. Tap the mic, talk — your words stream
+out as Morse beeps a few seconds behind your voice, like a live broadcast. The
+punching fist, signal glow, and your phone's camera flashlight all fire in sync
+with every dot and dash.
+
+Stop transmitting and the message is **saved** — replay it, copy it, or share it
+anywhere with one tap. Past transmissions live in your browser (localStorage,
+no account, no server).
 
 Live: https://morse-player.vercel.app
+
+> Needs Chrome or Edge — real-time speech recognition only exists in Chromium
+> browsers. Your phone's Chrome works great.
 
 ## Run it
 
@@ -20,46 +27,30 @@ npm run build  # production build
 
 ```
 app/
-  page.tsx                 — page composition (no logic, just arranges components)
+  page.tsx                 — header, torch toggle, LiveTransmitter
   layout.tsx               — title, theme shell
 components/
-  MorseInput.tsx           — textarea + encode/decode toggle + mic button
-  MorseOutput.tsx          — live translation + copy button
-  ReferenceChart.tsx       — A–Z 0–9 lookup grid, click any letter to hear it
-  PlaybackControls.tsx     — play/stop + WPM slider
+  LiveTransmitter.tsx      — the whole app: transmit, log, save, share, replay, history
   TappingHand.tsx          — 👊 fist punching in sync with the beeps (+ glow ring)
-  VoiceButton.tsx          — mic toggle (hidden where speech API is unsupported)
-  TorchToggle.tsx          — camera flashlight toggle (hidden where unsupported)
+  TorchToggle.tsx          — camera flashlight on/off
 hooks/
-  useMorsePlayer.ts        — play/stop state machine, exactly one playback at a time
-  useSpeechInput.ts        — mic → text via the free Web Speech API (Chrome/Edge)
+  useLiveTransmitter.ts    — mic → words → queued Morse playback pump
 lib/
-  morse.ts                 — the alphabet table + textToMorse / morseToText (pure logic)
-  audio.ts                 — Web Audio beep engine: PARIS timing → tone schedule → sound
-  torch.ts                 — camera flashlight control via MediaDevices torch constraint
-tests/
-  morse.test.ts            — unit tests for the conversion logic
-  audio.test.ts            — unit tests for the timing scheduler
+  morse.ts                 — text ⇄ morse tables (PARIS timing)
+  audio.ts                 — Web Audio beep engine (pure scheduler + player)
+  torch.ts                 — camera flashlight control
+  liveQueue.ts             — word consumption + FIFO queue (pure, tested)
+  transmissions.ts         — saved transmissions: localStorage + share text
+tests/                     — 39 unit tests (vitest)
 ```
 
-Rules: `lib/` never touches the screen, `components/` never touch audio.
-They talk through hooks. That's what keeps code maintainable.
+## How the live transmitter works
 
-## The timing spec
-
-Standard PARIS Morse timing: dot = 1 unit, dash = 3 units, unit = `1200 / WPM` ms.
-Tone: 650 Hz sine wave with 5 ms fade in/out (no speaker clicks).
-
-## Browser notes
-
-- **Mic**: needs Chrome/Edge + HTTPS + mic permission. Everywhere else the button hides itself.
-- **Flashlight**: needs a phone with a flash (Android Chrome). Desktops report "no flash on this device".
-
-## Roadmap
-
-- [x] Day 1 — encode/decode logic + tests + UI skeleton
-- [x] Day 2 — sound player, signal light, WPM slider, click-to-hear chart
-- [x] Day 2.5 — voice input, torch flash sync
-- [x] Deploy — live on Vercel
-- [x] Hand-sign visual — tapping-hand animation 👊
-- [ ] Day 3 — LinkedIn post with a video of it beeping your name
+1. **Listen** — the Web Speech API streams interim guesses and final words
+   (Chrome auto-stops on silence, so the hook restarts it).
+2. **Consume** — newly finalized words are diffed out of the growing transcript
+   and converted to Morse.
+3. **Pump** — words queue up and play back-to-back via `playMorse()`, trailing
+   your voice by a few seconds. A "queued behind you" counter shows the lag.
+4. **Save** — on stop, the transmission is stored in localStorage and shown
+   with Share / Copy / Replay actions.

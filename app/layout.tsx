@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Morse Code Player",
+  title: "Morse TX — live voice-to-Morse transmitter",
   description: "Type text, get Morse code. Paste Morse, get text. Then hear it played out loud.",
 };
 
